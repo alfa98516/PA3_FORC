@@ -47,7 +47,7 @@ class ASTNode {
 
     virtual Op getOp() { return Op::Error; }
 
-    virtual int getVal() { return 0; } // ((int)(((unsigned int)~0) >> 1)); }; // geuninely fuck it
+    virtual int getVal() { return ((int)(((unsigned int)~0) >> 1)); } // geuninely fuck it
 
     virtual std::string getName() { return "ERROR"; }
 };
@@ -135,7 +135,7 @@ class AbstractSyntaxTree {
             if (peek() == tokID::MINUS) {
                 consume();
                 std::unique_ptr<ASTNode> rightOp = expr();
-                std::unique_ptr<ASTNode> binNode = std::make_unique<BinaryOperatorNode>(Op::Plus, std::move(leftOp), std::move(rightOp));
+                std::unique_ptr<ASTNode> binNode = std::make_unique<BinaryOperatorNode>(Op::Minus, std::move(leftOp), std::move(rightOp));
                 return binNode;
             } else if (peek() == tokID::PLUS) {
                 consume();
@@ -208,25 +208,25 @@ class AbstractSyntaxTree {
         if (!node) return;
 
         std::cout << prefix;
-        std::cout << (isLeft ? "├── " : "└──");
+        std::cout << (isLeft ? "├── " : "└── ");
 
         if (node->type() == NodeType::Int) {
-            std::cout << node->getVal();
+            std::cout << node->getVal() << std::endl;
         } else if (node->type() == NodeType::Id) {
-            std::cout << node->getName();
+            std::cout << node->getName() << std::endl;
         } else if (node->type() == NodeType::Binary) {
             switch (node->getOp()) {
             case Op::Plus:
-                std::cout << '+';
+                std::cout << "+" << std::endl;
                 break;
             case Op::Minus:
-                std::cout << '-';
+                std::cout << "-" << std::endl;
                 break;
             case Op::Multiply:
-                std::cout << '*';
+                std::cout << "*" << std::endl;
                 break;
             case Op::Divide:
-                std::cout << '/';
+                std::cout << "/" << std::endl;
                 break;
             case Op::Error:
                 std::cout << peek().lexeme;
@@ -234,7 +234,7 @@ class AbstractSyntaxTree {
             default:
                 std::cout << peek().lexeme;
             }
-            std::cout << std::endl;
+
             if (node->getRight() || node->getLeft()) {
                 if (node->getLeft()) printTree(node->getLeft(), prefix + (isLeft ? "│   " : "    "), true);
                 if (node->getRight()) printTree(node->getRight(), prefix + (isLeft ? "│   " : "    "), false);

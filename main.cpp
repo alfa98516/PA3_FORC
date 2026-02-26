@@ -4,8 +4,8 @@
 #include <memory>
 
 int main() {
-    Tokenizer tokenizer = Tokenizer("5*0");
+    Tokenizer tokenizer = Tokenizer("5*5+4-2");
     AbstractSyntaxTree tree = AbstractSyntaxTree(tokenizer.tokens);
     ASTNode* root = tree.root.get();
-    std::cout << root->getVal() << '\n';
+    tree.printTree(root);
 }
