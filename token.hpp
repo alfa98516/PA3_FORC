@@ -64,6 +64,7 @@ class Tokenizer {
 
   public:
     std::vector<Token> tokens;
+
     /*
      * @brief this is the only constructor cause I dont think I need another one.
      * @param _line: this is the line we're parsing
@@ -116,6 +117,8 @@ class Tokenizer {
             case '*':
                 tokens.push_back(Token("*", MULT));
                 continue;
+            case '/':
+                tokens.push_back(Token("/", DIV));
             case '=':
                 tokens.push_back(Token("=", ASSIGN));
                 continue;
