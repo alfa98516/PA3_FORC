@@ -19,3 +19,6 @@ OUT = a.out
 
 OUT: $(MAIN) $(TREE)
 	$(CC) $(CXXFLAGS) $(MAIN) -o $(OUT)
+
+clean:
+	rm -f a.out

@@ -1,0 +1,150 @@
+#include "token.hpp"
+#include <algorithm>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
+
+/*
+ * Expr -> Term | -Term | Term + Expr | Term - Expr
+ * Term -> Factor | Factor * Term
+ * Factor -> int | id | ( Expr )
+ *
+ * This is the context free grammer taken from the Florritunarmál compiler and interpreter assignemnt.
+ * I'm using it as reference for this assignment, as we're kind of just doing that one again.
+ */
+
+#ifndef AST_NODE
+#define AST_NODE
+
+// Binary operators, better here as a class as it doesnt pollute names
+enum class Op {
+    Plus,
+    Minus,
+    Multiply,
+    Divide
+};
+
+class ASTNode {
+  public:
+    virtual ~ASTNode() = default; // using virtual enables polymorphism
+};
+
+class IntNode : public ASTNode {
+  public:
+    int value;
+    explicit IntNode(int val) : value(val) {}
+};
+
+class IdNode : public ASTNode {
+  public:
+    std::string name;
+    explicit IdNode(const std::string& _name) : name(_name) {}
+};
+
+class UnaryMinusNode : public ASTNode {
+  public:
+    std::unique_ptr<ASTNode> operand;
+    explicit UnaryMinusNode(std::unique_ptr<ASTNode> op) : operand(std::move(op)) {}
+};
+
+class BinaryOperatorNode : public ASTNode {
+  public:
+    Op op;
+    std::unique_ptr<ASTNode> left;
+    std::unique_ptr<ASTNode> right;
+    BinaryOperatorNode(Op operation, std::unique_ptr<ASTNode> lhs, std::unique_ptr<ASTNode> rhs)
+        : op(operation), left(std::move(lhs)), right(std::move(rhs)) {}
+};
+
+#endif
+#ifndef AST
+#define AST
+
+class AbstractSyntaxTree {
+    size_t size;
+    size_t currIdx;
+    std::vector<Token> tokens;
+    Token* curr;
+
+    void error() {
+        std::cout << "Syntax Error: " << '"' << *curr << '"' << '\n';
+        exit(1);
+    }
+
+    Token peek() {
+        return tokens[currIdx];
+    }
+
+    void consume() {
+        currIdx++;
+    }
+
+    std::unique_ptr<ASTNode> expr() {
+        std::cout << peek() << '\n';
+        if (peek() == MINUS) {
+            consume();
+            std::unique_ptr<ASTNode> op = term();
+            auto node = std::make_unique<UnaryMinusNode>(std::move(op));
+        } else {
+            std::unique_ptr<ASTNode> leftOp = term();
+            if (peek() == MINUS) {
+                consume();
+                std::unique_ptr<ASTNode> rightOp = expr();
+                auto binNode = std::make_unique<BinaryOperatorNode>(Op::Plus, std::move(leftOp), std::move(rightOp));
+                return binNode;
+            } else if (peek() == PLUS) {
+                consume();
+                std::unique_ptr<ASTNode> rightOp = expr();
+                auto binNode = std::make_unique<BinaryOperatorNode>(Op::Plus, std::move(leftOp), std::move(rightOp));
+                return binNode;
+            } else {
+                error();
+            }
+        }
+    }
+
+    std::unique_ptr<ASTNode> term() {
+        std::unique_ptr<ASTNode> node = factor();
+        if (peek() == MULT) {
+            std::unique_ptr<ASTNode> right = term();
+            auto binNode = std::make_unique<BinaryOperatorNode>(
+                Op::Multiply, std::move(node), std::move(right));
+            return binNode;
+        } else if (peek() == DIV) {
+
+            std::unique_ptr<ASTNode> right = term();
+            auto binNode = std::make_unique<BinaryOperatorNode>(
+                Op::Divide, std::move(node), std::move(right));
+            return binNode;
+        } else {
+            return node;
+        }
+    }
+
+    std::unique_ptr<ASTNode> factor() {
+        if (peek() == INT) {
+            auto node = std::make_unique<IntNode>(IntNode(std::stoi(peek().lexeme)));
+            consume();
+            return node;
+        } else if (peek() == ID) {
+            auto node = std::make_unique<IdNode>(IdNode(peek().lexeme));
+            consume();
+            return node;
+        } else if (peek() == RPAREN) {
+            std::unique_ptr<ASTNode> node = expr();
+            consume();
+            if (peek() != LPAREN) error();
+            return node;
+        } else {
+            error();
+        }
+    }
+
+  public:
+    std::unique_ptr<ASTNode> root;
+    AbstractSyntaxTree(std::vector<Token> _tokens) : currIdx(0), tokens(_tokens) {
+        root = expr();
+    }
+};
+#endif

@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-enum tokID {
+enum class tokID {
     ID,
     INT,
     LPAREN,
@@ -23,10 +23,10 @@ enum tokID {
 #define TOKEN
 
 struct Token {
-    std::string lexeme;
-    tokID tokenID;
+    const std::string lexeme;
+    const tokID tokenID;
 
-    Token(std::string _lexeme, tokID _tokenID) : lexeme(_lexeme), tokenID(_tokenID) {}
+    Token(const std::string _lexeme, const tokID _tokenID) : lexeme(_lexeme), tokenID(_tokenID) {}
 
     /*
      * @brief This is the acutally useful operator== function, it checks if the current token has a specific ID.
@@ -82,7 +82,7 @@ class Tokenizer {
             if (integer) {
                 if (!IsNumeric(curr)) {
                     integer = false;
-                    tokens.push_back(Token(lexeme, INT));
+                    tokens.push_back(Token(lexeme, tokID::INT));
                     lexeme = "";
                 } else {
                     lexeme += curr;
@@ -93,7 +93,7 @@ class Tokenizer {
             if (id) {
                 if (!std::isalpha(curr)) {
                     id = false;
-                    tokens.push_back(Token(lexeme, ID));
+                    tokens.push_back(Token(lexeme, tokID::ID));
                     lexeme = "";
                 } else {
                     lexeme += curr;
@@ -103,24 +103,24 @@ class Tokenizer {
 
             switch (curr) {
             case '+':
-                tokens.push_back(Token("+", PLUS));
+                tokens.push_back(Token("+", tokID::PLUS));
                 continue;
             case '-':
-                tokens.push_back(Token("-", MINUS));
+                tokens.push_back(Token("-", tokID::MINUS));
                 continue;
             case '(':
-                tokens.push_back(Token("(", LPAREN));
+                tokens.push_back(Token("(", tokID::LPAREN));
                 continue;
             case ')':
-                tokens.push_back(Token(")", RPAREN));
+                tokens.push_back(Token(")", tokID::RPAREN));
                 continue;
             case '*':
-                tokens.push_back(Token("*", MULT));
+                tokens.push_back(Token("*", tokID::MULT));
                 continue;
             case '/':
-                tokens.push_back(Token("/", DIV));
+                tokens.push_back(Token("/", tokID::DIV));
             case '=':
-                tokens.push_back(Token("=", ASSIGN));
+                tokens.push_back(Token("=", tokID::ASSIGN));
                 continue;
             default:
 
@@ -130,7 +130,7 @@ class Tokenizer {
                 lexeme += curr; // this gets lost if we're on the last character.
 
                 if ((!integer) && (!id)) {
-                    tokens.push_back(Token(lexeme, ERROR));
+                    tokens.push_back(Token(lexeme, tokID::ERROR));
                     lexeme = "";
                 }
             }
@@ -138,17 +138,17 @@ class Tokenizer {
 
         // The reason we need these two extra checks is because if we end with an integer or id, we lose the last character of it.
         if (integer) {
-            tokens.push_back(Token(lexeme, INT));
+            tokens.push_back(Token(lexeme, tokID::INT));
         }
 
         if (id) {
-            tokens.push_back(Token(lexeme, ID));
+            tokens.push_back(Token(lexeme, tokID::ID));
         }
     }
 
     /*
      * @brief simple if check but its nicer as a function call
-     * @param decimal: The char were checking for.
+     * @param decimal: The char were checking for.
      * @returns bool: weather or not the char is numerical.
      */
     static bool IsNumeric(char decimal) {
@@ -167,7 +167,7 @@ class Tokenizer {
  * @returns ostream: so we can do more printing.
  */
 std::ostream& operator<<(std::ostream& out, const Token& token) {
-    out << token.tokenID << ": " << token.lexeme;
+    out << (int)token.tokenID << ": " << token.lexeme;
     return out;
 }
 #endif
