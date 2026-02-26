@@ -26,6 +26,24 @@ struct Token {
     tokID tokenID;
 
     Token(std::string _lexeme, tokID _tokenID) : lexeme(_lexeme), tokenID(_tokenID) {}
+
+    /*
+     * @brief This is the acutally useful operator== function, it checks if the current token has a specific ID.
+     * @param id: The id were checking
+     * @returns bool
+     */
+    bool operator==(tokID id) {
+        return id == tokenID;
+    }
+
+    /*
+     * @brief I have no idea if this is useful or not, but I'm implimenting it just in case
+     * @param other: The other token we're comparing.
+     * @returns bool: are they equal?
+     */
+    bool operator==(const Token other) {
+        return other.lexeme == lexeme;
+    }
 };
 #endif
 
@@ -91,9 +109,12 @@ class Tokenizer {
                 tokens.push_back(Token("=", ASSIGN));
                 continue;
             default:
+
                 integer = IsNumeric(curr);
                 id = std::isalpha(curr);
-                lexeme += curr;
+
+                lexeme += curr; // this gets lost if we're on the last character.
+
                 if ((!integer) && (!id)) {
                     tokens.push_back(Token(lexeme, ERROR));
                     lexeme = "";
@@ -101,6 +122,7 @@ class Tokenizer {
             }
         }
 
+        // The reason we need these two extra checks is because if we end with an integer or id, we lose the last character of it.
         if (integer) {
             tokens.push_back(Token(lexeme, INT));
         }
@@ -116,7 +138,7 @@ class Tokenizer {
      * @returns bool: weather or not the char is numerical.
      */
     static bool IsNumeric(char decimal) {
-        if (decimal <= 57 && decimal >= 48) return true;
+        if (decimal <= 57 && decimal >= 48) return true; // in ascii, 0-9 are between these ranges.
         return false;
     }
 };
