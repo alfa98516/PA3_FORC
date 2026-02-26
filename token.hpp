@@ -14,6 +14,7 @@ enum tokID {
     MINUS,
     MULT,
     ASSIGN,
+    DIV,
     ERROR
 };
 #endif
