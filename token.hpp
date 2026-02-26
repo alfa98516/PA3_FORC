@@ -30,11 +30,20 @@ struct Token {
 
     /*
      * @brief This is the acutally useful operator== function, it checks if the current token has a specific ID.
-     * @param id: The id were checking
-     * @returns bool
+     * @param id: The id were comparing.
+     * @returns bool: are they equal?
      */
-    bool operator==(tokID id) {
+    bool operator==(const tokID id) {
         return id == tokenID;
+    }
+
+    /*
+     * @brief Same as the one above, just the "not equal" one.
+     * @param id: The id we're comparing
+     * @returns bool: are they equal?
+     */
+    bool operator!=(const tokID id) {
+        return id != tokenID;
     }
 
     /*
@@ -65,7 +74,6 @@ class Tokenizer {
         bool id = false;
 
         for (char curr : _line) {
-            std::cout << curr << '\n';
             if (std::isspace(curr)) {
                 continue;
             }
@@ -77,6 +85,7 @@ class Tokenizer {
                     lexeme = "";
                 } else {
                     lexeme += curr;
+                    continue;
                 }
             }
 
@@ -87,6 +96,7 @@ class Tokenizer {
                     lexeme = "";
                 } else {
                     lexeme += curr;
+                    continue;
                 }
             }
 
@@ -139,8 +149,22 @@ class Tokenizer {
      * @returns bool: weather or not the char is numerical.
      */
     static bool IsNumeric(char decimal) {
-        if (decimal <= 57 && decimal >= 48) return true; // in ascii, 0-9 are between these ranges.
+        if (decimal <= 57 && decimal >= 48)
+            return true; // in ascii, 0-9 are between these ranges.
         return false;
     }
 };
+#endif
+#ifndef TOKEN_OSTREAM
+#define TOKEN_OSTREAM
+/*
+ * @breif I'm insane and untrustworthy, i defined a function in a header file.
+ * @param out: ostream we're outputting to.
+ * @param token: The token we're printing out.
+ * @returns ostream: so we can do more printing.
+ */
+std::ostream& operator<<(std::ostream& out, const Token& token) {
+    out << token.tokenID << ": " << token.lexeme;
+    return out;
+}
 #endif
