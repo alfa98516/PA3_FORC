@@ -16,5 +16,6 @@ make
     -
 
 ### An explanation of the format you store the AST (Abstract Syntax Tree) in that the two versions read/write.
+AST is in a txt file that has nodes in a BFS order.
 
 ### Anything else a student wishes to say. Put it here and not in the Canvas comments!
