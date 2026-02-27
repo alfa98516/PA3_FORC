@@ -230,7 +230,8 @@ class AbstractSyntaxTree {
     }
 
     void inorder(ASTNode* node, std::shared_ptr<std::vector<ASTNode*> > nodes) {
-        if (node == nullptr) return;
+        if (node == nullptr)
+            return;
         inorder(node->getLeft(), nodes);
 
         nodes->push_back(node);
@@ -240,9 +241,40 @@ class AbstractSyntaxTree {
     /*
      * @brief This is the actual logic behind the heapify function.
      * Recursively checks all nodes and turns it into a heap array.
+     * "1 + 3 * 5"
+     * This would make a binary tree like this:
+     *           +
+     *          / \
+     *         1   *
+     *            / \
+     *           3   5
+     * And should correspond to this heap array:
+     * {+, 1, *, null, null, 3, 5}
+     * This is basically a BFS on a binary tree.
      * @param heap: a shared pointer of vector of ASTNode.
+     *
      */
-    void heapify(std::shared_ptr<std::vector<ASTNode*> > heap, ASTNode* node) {}
+    void heapify(std::shared_ptr<std::vector<ASTNode*> > heap, ASTNode* node) {
+
+        std::queue<ASTNode*> q;
+        q.push(node);
+
+        while (!q.empty()) {
+            ASTNode* curr = q.front();
+            q.pop();
+
+            heap->push_back(curr);
+
+            if (curr != nullptr) {
+                q.push(curr->getLeft());
+                q.push(curr->getRight());
+            }
+        }
+
+        while (!heap->empty() && heap->back() == nullptr) {
+            heap->pop_back();
+        }
+    }
 
   public:
     /*
@@ -259,7 +291,8 @@ class AbstractSyntaxTree {
 
     void printTree() { printTree(root.get()); }
     void printTree(ASTNode* node, std::string prefix = "", bool isLeft = true) {
-        if (!node) return;
+        if (!node)
+            return;
 
         std::cout << prefix;
         std::cout << (isLeft ? "├── " : "└── ");
@@ -308,6 +341,16 @@ class AbstractSyntaxTree {
 
         size = tokens.size();
         root = expr();
+    }
+
+    AbstractSyntaxTree(std::string heap) {
+        bool integer = false;
+
+        for (int i = 0; heap[i] != '}'; ++i) {
+            if (Tokenizer::isNumeric(heap[i])) {
+                integer = true;
+            }
+        }
     }
 };
 #endif

@@ -5,18 +5,7 @@
 #include <string>
 #include <vector>
 
-enum class tokID {
-    ID,
-    INT,
-    LPAREN,
-    RPAREN,
-    PLUS,
-    MINUS,
-    MULT,
-    ASSIGN,
-    DIV,
-    ERROR
-};
+enum class tokID { ID, INT, LPAREN, RPAREN, PLUS, MINUS, MULT, ASSIGN, DIV, ERROR };
 #endif
 
 #ifndef TOKEN
@@ -29,31 +18,26 @@ struct Token {
     Token(const std::string _lexeme, const tokID _tokenID) : lexeme(_lexeme), tokenID(_tokenID) {}
 
     /*
-     * @brief This is the acutally useful operator== function, it checks if the current token has a specific ID.
+     * @brief This is the acutally useful operator== function, it checks if the current token has a
+     * specific ID.
      * @param id: The id were comparing.
      * @returns bool: are they equal?
      */
-    bool operator==(const tokID id) {
-        return id == tokenID;
-    }
+    bool operator==(const tokID id) { return id == tokenID; }
 
     /*
      * @brief Same as the one above, just the "not equal" one.
      * @param id: The id we're comparing
      * @returns bool: are they equal?
      */
-    bool operator!=(const tokID id) {
-        return id != tokenID;
-    }
+    bool operator!=(const tokID id) { return id != tokenID; }
 
     /*
      * @brief I have no idea if this is useful or not, but I'm implimenting it just in case
      * @param other: The other token we're comparing.
      * @returns bool: are they equal?
      */
-    bool operator==(const Token other) {
-        return other.lexeme == lexeme;
-    }
+    bool operator==(const Token other) { return other.lexeme == lexeme; }
 };
 #endif
 
@@ -136,7 +120,8 @@ class Tokenizer {
             }
         }
 
-        // The reason we need these two extra checks is because if we end with an integer or id, we lose the last character of it.
+        // The reason we need these two extra checks is because if we end with an integer or id, we
+        // lose the last character of it.
         if (integer) {
             tokens.push_back(Token(lexeme, tokID::INT));
         }
@@ -148,7 +133,7 @@ class Tokenizer {
 
     /*
      * @brief simple if check but its nicer as a function call
-     * @param decimal: The char were checking for.
+     * @param decimal: The char were checking for.
      * @returns bool: weather or not the char is numerical.
      */
     static bool IsNumeric(char decimal) {
