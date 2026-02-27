@@ -266,8 +266,11 @@ class AbstractSyntaxTree {
             heap->push_back(curr);
 
             if (curr != nullptr) {
-                q.push(curr->getLeft());
-                q.push(curr->getRight());
+                // only push children if this is not a leaf node
+                if (curr->type() == NodeType::Binary || curr->type() == NodeType::Unary) {
+                    q.push(curr->getLeft());
+                    q.push(curr->getRight());
+                }
             }
         }
 
@@ -275,7 +278,61 @@ class AbstractSyntaxTree {
             heap->pop_back();
         }
     }
+    //initiate outside so I don't reset every time function is called
+    size_t strIdx = 0;
+    std::string nextToken(const std::string& s) {
+        // skip spaces and braces
+        while (strIdx < s.size() && (std::isspace(s[strIdx]) || s[strIdx] == '{' || s[strIdx] == '}')) {
+            strIdx++;
+        }
+        std::string token;
+        while (strIdx < s.size() && !std::isspace(s[strIdx]) && s[strIdx] != '}'){
+            token += s[strIdx++];
+        }
+        return token;
+    }
 
+    //Overloaded error for fromHeap :D can change if don't want
+    void error(const std::string& tok) {
+        std::cout << "Syntax Error: " << '"' << tok << '"' << '\n';
+        exit(1);
+    }
+
+    std::unique_ptr<ASTNode> fromHeap(const std::string& s) {
+        std::string tok = nextToken(s);
+
+        if (tok.empty() || tok == "null") {
+            return nullptr;
+        }
+
+        if (std::isdigit(tok[0])) {
+            return std::make_unique<IntNode>(std::stoi(tok));
+        }
+        else if (std::isalpha(tok[0])) {
+            return std::make_unique<IdNode>(tok);
+        }
+        else {
+            Op op;
+            switch (tok[0]) {
+                case '+': op = Op::Plus; break;
+                case '-': op = Op::Minus; break;
+                case '*': op = Op::Multiply; break;
+                case '/': op = Op::Divide; break;
+                default: error(); 
+            }
+
+            //Recursion baby!!!
+            auto left = fromHeap(s);
+            auto right = fromHeap(s);
+
+            if (!left && right) {
+                return std::make_unique<UnaryMinusNode>(std::move(right));
+            }
+            if (!left || !right) error(); 
+
+            return std::make_unique<BinaryOperatorNode>(op, std::move(left), std::move(right));
+        }
+    }
   public:
     /*
      * @brief Turns a given AST and turns it into a heap arraya.
@@ -344,19 +401,13 @@ class AbstractSyntaxTree {
     }
 
     AbstractSyntaxTree(std::string heap) {
-        bool integer = false;
-
-        for (int i = 0; heap[i] != '}'; ++i) {
-            if (Tokenizer::isNumeric(heap[i])) {
-                integer = true;
-            }
-        }
+        root = fromHeap(heap);
     }
 };
 #endif
 #ifndef OSTREAM
 #define OSTREAM
-std::ostream& operator<<(std::ostream& out, AbstractSyntaxTree tree) {
+std::ostream& operator<<(std::ostream& out, AbstractSyntaxTree& tree) {
     std::shared_ptr<std::vector<ASTNode*> > heap = tree.heapify();
     out << "{";
     for (ASTNode* node : *heap.get()) {

@@ -103,6 +103,7 @@ class Tokenizer {
                 continue;
             case '/':
                 tokens.push_back(Token("/", tokID::DIV));
+                continue;
             case '=':
                 tokens.push_back(Token("=", tokID::ASSIGN));
                 continue;
