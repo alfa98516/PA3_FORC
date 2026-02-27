@@ -1,8 +1,8 @@
 # Syntax Tree
 #### Group members:
-    - Alfa Reynisdóttir
-    - Auðunn Daníel Jónsson
-    - Karen Yin Guðnadóttir
+- Alfa Reynisdóttir
+- Auðunn Daníel Jónsson
+- Karen Yin Guðnadóttir
 
 
 ### What needs to be written in the terminal to compile and run the program, explaining how to run each of the two parts.
@@ -26,9 +26,9 @@ To run the program:
 Run – Part 2 (Read and Evaluate AST)
 The program will:
 
-    ```
-    ./a.out <ast_input_file>
-    ```
+```
+./a.out <ast_input_file>
+```
 
 Build the Abstract Syntax Tree (AST)
 Print the tree in a readable format
@@ -42,13 +42,13 @@ After writing tree.txt, the program:
 - Prints the result
 
 ### What additional features were implemented above the base version, if any.
-    - Whitespace
-    - Modern C++ Tree
-    - Varibles
-    - AST optimisations
-    - High speed
-    - Error handling
-    - (Printing out the tree)
+- Whitespace
+- Modern C++ Tree
+- Varibles
+- AST optimisations
+- High speed
+- Error handling
+- (Printing out the tree)
 
 ### An explanation of the format you store the AST (Abstract Syntax Tree) in that the two versions read/write.
 The Abstract Syntax Tree (AST) is stored in a text file using a Breadth-First Search (BFS) order. This means the tree is written level by level, from left to right.
