@@ -16,6 +16,7 @@ make
     - AST optimisations
     - High speed
     - Error handling
+    - (Printing out the tree)
 
 ### An explanation of the format you store the AST (Abstract Syntax Tree) in that the two versions read/write.
 AST is in a txt file that has nodes in a BFS order.
