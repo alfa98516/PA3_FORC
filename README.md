@@ -16,20 +16,19 @@ make
 Run – Part 1 (Build AST and Write to File)
 To run the program:
 ```
-./a.out <ast_output_file> <expression_input_file>
+./parse <ast_output_file> 
 ```
 * <ast_output_file>: file where the AST will be written
-* <expression_input_file>: file containing the arithmetic expression
-* If <expression_input_file> is missing, the program reads from stdin
 
 
 Run – Part 2 (Read and Evaluate AST)
-The program will:
+The program will: read ast output file and evaluate the output
 
 ```
-./a.out <ast_input_file>
+./eval <ast_input_file> <expression_input_file>
 ```
-
+* <expression_input_file>: file containing the arithmetic expression
+* If <expression_input_file> is missing, the program reads from stdin
 Build the Abstract Syntax Tree (AST)
 Print the tree in a readable format
 Store the AST in tree.txt using BFS format
@@ -51,7 +50,7 @@ After writing tree.txt, the program:
 - (Printing out the tree)
 
 ### An explanation of the format you store the AST (Abstract Syntax Tree) in that the two versions read/write.
-The Abstract Syntax Tree (AST) is stored in a text file using a Breadth-First Search (BFS) order. This means the tree is written level by level, from left to right.
+The Abstract Syntax Tree (AST) is stored in a text file using a Depth-First Search (DFS) order. This means the tree is written level by level, from left to right.
 
 Format (tree is written as):
 ```
@@ -59,7 +58,7 @@ Format (tree is written as):
 ```
 
 How the Two Versions Use This Format
-- The writer version converts the AST into this BFS format and saves it to a file.
+- The writer version converts the AST into this DFS format and saves it to a file.
 - The reader version reconstructs the tree by reading tokens from left to right and rebuilding the structure recursively.
 
 ### Anything else a student wishes to say. Put it here and not in the Canvas comments!

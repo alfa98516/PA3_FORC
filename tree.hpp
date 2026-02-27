@@ -255,28 +255,15 @@ class AbstractSyntaxTree {
      * @param heap: a shared pointer of vector of ASTNode.
      *
      */
-    void BFS(std::shared_ptr<std::vector<ASTNode*> > heap, ASTNode* node) {
-
-        std::queue<ASTNode*> q;
-        q.push(node);
-
-        while (!q.empty()) {
-            ASTNode* curr = q.front();
-            q.pop();
-
-            heap->push_back(curr);
-
-            if (curr != nullptr) {
-                // only push children if this is not a leaf node
-                if (curr->type() == NodeType::Binary || curr->type() == NodeType::Unary) {
-                    q.push(curr->getLeft());
-                    q.push(curr->getRight());
-                }
-            }
+    void DFS(std::shared_ptr<std::vector<ASTNode*>> heap, ASTNode* node) {
+        if (node == nullptr) {
+            heap->push_back(nullptr);
+            return;
         }
-
-        while (!heap->empty() && heap->back() == nullptr) {
-            heap->pop_back();
+        heap->push_back(node);
+        if (node->type() == NodeType::Binary || node->type() == NodeType::Unary) {
+            DFS(heap, node->getLeft());
+            DFS(heap, node->getRight());
         }
     }
     //initiate outside so I don't reset every time function is called
@@ -302,40 +289,30 @@ class AbstractSyntaxTree {
     std::unique_ptr<ASTNode> fromString(const std::string& s) {
         std::string tok = nextToken(s);
 
-        if (tok.empty() || tok == "null") {
-            return nullptr;
+        if (tok.empty() || tok == "null") return nullptr;
+
+        if (std::isdigit(tok[0])) return std::make_unique<IntNode>(std::stoi(tok));
+        if (std::isalpha(tok[0])) return std::make_unique<IdNode>(tok);
+
+        Op op;
+        switch (tok[0]) {
+            case '+': op = Op::Plus;     break;
+            case '-': op = Op::Minus;    break;
+            case '*': op = Op::Multiply; break;
+            case '/': op = Op::Divide;   break;
+            default: error(tok);
         }
 
-        if (std::isdigit(tok[0])) {
-            return std::make_unique<IntNode>(std::stoi(tok));
-        }
-        else if (std::isalpha(tok[0])) {
-            return std::make_unique<IdNode>(tok);
-        }
-        else {
-            Op op;
-            switch (tok[0]) {
-                case '+': op = Op::Plus; break;
-                case '-': op = Op::Minus; break;
-                case '*': op = Op::Multiply; break;
-                case '/': op = Op::Divide; break;
-                default: error(); 
-            }
+        auto left  = fromString(s);
+        auto right = fromString(s);
 
-            //Recursion baby!!!
-            auto left = fromString(s);
-            auto right = fromString(s);
+        if (!left && right) return std::make_unique<UnaryMinusNode>(std::move(right));
+        if (!left || !right) error(tok);
 
-            if (!left && right) {
-                return std::make_unique<UnaryMinusNode>(std::move(right));
-            }
-            if (!left || !right) error(); 
-
-            return std::make_unique<BinaryOperatorNode>(op, std::move(left), std::move(right));
-        }
+        return std::make_unique<BinaryOperatorNode>(op, std::move(left), std::move(right));
     }
 
-    long long evaluate(ASTNode* node, const std::unordered_map<std::string, long long>& vars) {
+    long evaluate(ASTNode* node, const std::unordered_map<std::string, long>& vars) {
         if (!node) {
             error();
         }
@@ -356,8 +333,8 @@ class AbstractSyntaxTree {
                 return -evaluate(node->getRight(), vars);
 
             case NodeType::Binary: {
-                long long left = evaluate(node->getLeft(), vars);
-                long long right = evaluate(node->getRight(), vars);
+                long left = evaluate(node->getLeft(), vars);
+                long right = evaluate(node->getRight(), vars);
                 switch (node->getOp()) {
                     case Op::Plus: return left + right;
                     case Op::Minus: return left - right;
@@ -376,12 +353,7 @@ class AbstractSyntaxTree {
     }
 
   public:
-    /*
-     * @brief Turns a given AST and turns it into a heap arraya.
-     * We use this to store the tree in a meaningful way in a file
-     * @returns std::shared_ptr<std::vector<ASTNode*>>, a shared pointer to a
-     * vector of ASTNodes.
-     */
+
     std::unique_ptr<ASTNode> root;
     AbstractSyntaxTree(std::vector<Token> _tokens) : currIdx(0), tokens(_tokens) {
         size = tokens.size();
@@ -392,9 +364,15 @@ class AbstractSyntaxTree {
         root = fromString(heap);
     }
 
-    std::shared_ptr<std::vector<ASTNode*> > BFS() {
+    /*
+     * @brief Turns a given AST and turns it into a heap arraya.
+     * We use this to store the tree in a meaningful way in a file
+     * @returns std::shared_ptr<std::vector<ASTNode*>>, a shared pointer to a
+     * vector of ASTNodes.
+     */
+    std::shared_ptr<std::vector<ASTNode*> > DFS() {
         std::shared_ptr<std::vector<ASTNode*> > heap = std::make_shared<std::vector<ASTNode*> >();
-        BFS(heap, root.get());
+        DFS(heap, root.get());
         return heap;
     }
 
@@ -445,8 +423,8 @@ class AbstractSyntaxTree {
         }
     }
 
-    long long evaluate(const std::string& varFile = "") {
-        std::unordered_map<std::string, long long> vars;
+    long evaluate(const std::string& varFile = "") {
+        std::unordered_map<std::string, long> vars;
 
         if (!varFile.empty()) {
             std::ifstream f(varFile);
@@ -459,7 +437,7 @@ class AbstractSyntaxTree {
                 size_t eq = line.find('=');
                 if (eq == std::string::npos) continue;
                 std::string name = line.substr(0, eq);
-                long long val = std::stoll(line.substr(eq + 1));
+                long long val = std::stol(line.substr(eq + 1));
                 vars[name] = val;
             }
         }
@@ -471,7 +449,7 @@ class AbstractSyntaxTree {
 #ifndef OSTREAM
 #define OSTREAM
 std::ostream& operator<<(std::ostream& out, AbstractSyntaxTree& tree) {
-    std::shared_ptr<std::vector<ASTNode*> > heap = tree.BFS();
+    std::shared_ptr<std::vector<ASTNode*> > heap = tree.DFS();
     out << "{";
     for (ASTNode* node : *heap.get()) {
         if (!node) {

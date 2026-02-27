@@ -2,24 +2,29 @@
 #include "tree.hpp"
 #include <fstream>
 #include <iostream>
-#include <memory>
-#include <vector>
+#include <string>
 
-int main() {
-    Tokenizer tokenizer = Tokenizer("1*(5+3 -34-(32+x))");
+int main(int argc, char* argv[]) {
+    std::string expression;
+    if (argc == 3) {
+
+        expression = argv[2];
+    } else if (argc == 2) {
+        std::cin >> expression;
+    } else {
+        fprintf(stderr, "Error: Incorrect Usage: ./parse [FILENAME] [EXPRESSION]\n");
+        exit(1);
+    }
+
+    std::cout << "Processing...\n";
+
+    Tokenizer tokenizer = Tokenizer(expression);
     AbstractSyntaxTree tree = AbstractSyntaxTree(tokenizer.tokens);
+
+    std::cout << "Resulting Tree:\n";
     tree.printTree();
-    std::ofstream out("tree.txt");
-    out << tree;
-    out.close();
-
-    std::ifstream in("tree.txt");
-    std::string heap;
-    std::getline(in, heap);
-    in.close();
-    
-    AbstractSyntaxTree tree2 = AbstractSyntaxTree(heap);
-
-    std::string varFile = "vars.txt";
-    std::cout << tree.evaluate(varFile) << '\n';
+    std::ofstream f(argv[1]);
+    f << tree << '\n';
+    std::cout<< tree.evaluate() << '\n';
+    f.close();
 }
