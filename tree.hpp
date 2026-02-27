@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <fstream>
 /*
  * Expr -> Term | -Term | Term + Expr | Term - Expr
  * Term -> Factor | Factor * Term | Factor / Term
@@ -334,6 +335,46 @@ class AbstractSyntaxTree {
         }
     }
 
+    long long evaluate(ASTNode* node, const std::unordered_map<std::string, long long>& vars) {
+        if (!node) {
+            error();
+        }
+
+        switch (node->type()) {
+            case NodeType::Int:
+                return node->getVal();
+            
+            case NodeType::Id:{
+                // find the value the name represents
+                auto it = vars.find(node->getName());
+                if (it == vars.end()) {
+                    std::cout << "Error: undefined variable";
+                }
+                return it->second;
+            } 
+            case NodeType::Unary:
+                return -evaluate(node->getRight(), vars);
+
+            case NodeType::Binary: {
+                long long left = evaluate(node->getLeft(), vars);
+                long long right = evaluate(node->getRight(), vars);
+                switch (node->getOp()) {
+                    case Op::Plus: return left + right;
+                    case Op::Minus: return left - right;
+                    case Op::Multiply: return left * right;
+                    case Op::Divide:
+                        if (right == 0) {
+                            std::cout << "Error: division by zero\n";
+                            exit(1);
+                        }
+                        return left/right;
+                    default: error();
+                }
+            }
+            default: error();
+        }
+    }
+
   public:
     /*
      * @brief Turns a given AST and turns it into a heap arraya.
@@ -341,6 +382,16 @@ class AbstractSyntaxTree {
      * @returns std::shared_ptr<std::vector<ASTNode*>>, a shared pointer to a
      * vector of ASTNodes.
      */
+    std::unique_ptr<ASTNode> root;
+    AbstractSyntaxTree(std::vector<Token> _tokens) : currIdx(0), tokens(_tokens) {
+        size = tokens.size();
+        root = expr();
+    }
+
+    AbstractSyntaxTree(std::string heap) {
+        root = fromString(heap);
+    }
+
     std::shared_ptr<std::vector<ASTNode*> > BFS() {
         std::shared_ptr<std::vector<ASTNode*> > heap = std::make_shared<std::vector<ASTNode*> >();
         BFS(heap, root.get());
@@ -394,14 +445,26 @@ class AbstractSyntaxTree {
         }
     }
 
-    std::unique_ptr<ASTNode> root;
-    AbstractSyntaxTree(std::vector<Token> _tokens) : currIdx(0), tokens(_tokens) {
-        size = tokens.size();
-        root = expr();
-    }
+    long long evaluate(const std::string& varFile = "") {
+        std::unordered_map<std::string, long long> vars;
 
-    AbstractSyntaxTree(std::string heap) {
-        root = fromString(heap);
+        if (!varFile.empty()) {
+            std::ifstream f(varFile);
+            if (!f.is_open()) {
+                std::cout << "Error: could not open variable file '" << varFile << "'\n";
+                exit(1);
+            }
+            std::string line;
+            while (std::getline(f, line)) {
+                size_t eq = line.find('=');
+                if (eq == std::string::npos) continue;
+                std::string name = line.substr(0, eq);
+                long long val = std::stoll(line.substr(eq + 1));
+                vars[name] = val;
+            }
+        }
+
+        return evaluate(root.get(), vars);
     }
 };
 #endif
