@@ -21,4 +21,8 @@ make
 ### An explanation of the format you store the AST (Abstract Syntax Tree) in that the two versions read/write.
 The Abstract Syntax Tree (AST) is stored in a text file using a Breadth-First Search (BFS) order. This means the tree is written level by level, from left to right.
 
+How the Two Versions Use This Format
+- The writer version converts the AST into this BFS format and saves it to a file.
+- The reader version reconstructs the tree by reading tokens from left to right and rebuilding the structure recursively.
+
 ### Anything else a student wishes to say. Put it here and not in the Canvas comments!
