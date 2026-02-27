@@ -7,7 +7,7 @@
 #include <queue>
 #include <string>
 #include <vector>
-
+#include <unordered_map>
 /*
  * Expr -> Term | -Term | Term + Expr | Term - Expr
  * Term -> Factor | Factor * Term | Factor / Term
@@ -239,7 +239,7 @@ class AbstractSyntaxTree {
     }
 
     /*
-     * @brief This is the actual logic behind the heapify function.
+     * @brief This is the actual logic behind the BFS function.
      * Recursively checks all nodes and turns it into a heap array.
      * "1 + 3 * 5"
      * This would make a binary tree like this:
@@ -254,7 +254,7 @@ class AbstractSyntaxTree {
      * @param heap: a shared pointer of vector of ASTNode.
      *
      */
-    void heapify(std::shared_ptr<std::vector<ASTNode*> > heap, ASTNode* node) {
+    void BFS(std::shared_ptr<std::vector<ASTNode*> > heap, ASTNode* node) {
 
         std::queue<ASTNode*> q;
         q.push(node);
@@ -292,13 +292,13 @@ class AbstractSyntaxTree {
         return token;
     }
 
-    //Overloaded error for fromHeap :D can change if don't want
+    //Overloaded error for fromString :D can change if don't want
     void error(const std::string& tok) {
         std::cout << "Syntax Error: " << '"' << tok << '"' << '\n';
         exit(1);
     }
 
-    std::unique_ptr<ASTNode> fromHeap(const std::string& s) {
+    std::unique_ptr<ASTNode> fromString(const std::string& s) {
         std::string tok = nextToken(s);
 
         if (tok.empty() || tok == "null") {
@@ -322,8 +322,8 @@ class AbstractSyntaxTree {
             }
 
             //Recursion baby!!!
-            auto left = fromHeap(s);
-            auto right = fromHeap(s);
+            auto left = fromString(s);
+            auto right = fromString(s);
 
             if (!left && right) {
                 return std::make_unique<UnaryMinusNode>(std::move(right));
@@ -333,6 +333,7 @@ class AbstractSyntaxTree {
             return std::make_unique<BinaryOperatorNode>(op, std::move(left), std::move(right));
         }
     }
+
   public:
     /*
      * @brief Turns a given AST and turns it into a heap arraya.
@@ -340,9 +341,9 @@ class AbstractSyntaxTree {
      * @returns std::shared_ptr<std::vector<ASTNode*>>, a shared pointer to a
      * vector of ASTNodes.
      */
-    std::shared_ptr<std::vector<ASTNode*> > heapify() {
+    std::shared_ptr<std::vector<ASTNode*> > BFS() {
         std::shared_ptr<std::vector<ASTNode*> > heap = std::make_shared<std::vector<ASTNode*> >();
-        heapify(heap, root.get());
+        BFS(heap, root.get());
         return heap;
     }
 
@@ -395,20 +396,19 @@ class AbstractSyntaxTree {
 
     std::unique_ptr<ASTNode> root;
     AbstractSyntaxTree(std::vector<Token> _tokens) : currIdx(0), tokens(_tokens) {
-
         size = tokens.size();
         root = expr();
     }
 
     AbstractSyntaxTree(std::string heap) {
-        root = fromHeap(heap);
+        root = fromString(heap);
     }
 };
 #endif
 #ifndef OSTREAM
 #define OSTREAM
 std::ostream& operator<<(std::ostream& out, AbstractSyntaxTree& tree) {
-    std::shared_ptr<std::vector<ASTNode*> > heap = tree.heapify();
+    std::shared_ptr<std::vector<ASTNode*> > heap = tree.BFS();
     out << "{";
     for (ASTNode* node : *heap.get()) {
         if (!node) {

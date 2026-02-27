@@ -6,7 +6,7 @@
 #include <vector>
 
 int main() {
-    Tokenizer tokenizer = Tokenizer("3+4+d*4+2+5-3*(33/1)-1");
+    Tokenizer tokenizer = Tokenizer("-(3 + 5)");
     AbstractSyntaxTree tree = AbstractSyntaxTree(tokenizer.tokens);
     tree.printTree();
     std::ofstream out("tree.txt");
@@ -17,7 +17,7 @@ int main() {
     std::string heap;
     std::getline(in, heap);
     in.close();
-
+    std::cout<< '\n';
     AbstractSyntaxTree tree2 = AbstractSyntaxTree(heap);
     tree2.printTree();
 }
