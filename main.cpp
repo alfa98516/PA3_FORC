@@ -2,10 +2,10 @@
 #include "tree.hpp"
 #include <iostream>
 #include <memory>
+#include <vector>
 
 int main() {
-    Tokenizer tokenizer = Tokenizer("5*5+4-2");
+    Tokenizer tokenizer = Tokenizer("3-5*6");
     AbstractSyntaxTree tree = AbstractSyntaxTree(tokenizer.tokens);
-    ASTNode* root = tree.root.get();
-    tree.printTree(root);
+    std::cout << std::move(tree) << '\n';
 }

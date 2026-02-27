@@ -1,39 +1,33 @@
 #include "token.hpp"
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <iostream>
 #include <memory>
+#include <queue>
 #include <string>
 #include <vector>
 
 /*
  * Expr -> Term | -Term | Term + Expr | Term - Expr
- * Term -> Factor | Factor * Term
+ * Term -> Factor | Factor * Term | Factor / Term
  * Factor -> int | id | ( Expr )
  *
- * This is the context free grammer taken from the Florritunarmál compiler and interpreter assignemnt.
- * I'm using it as reference for this assignment, as we're kind of just doing that one again.
+ * This is the context free grammer taken from the Florritunarmál compiler and
+ * interpreter assignemnt. I'm using it as reference for this assignment, as
+ * we're kind of just doing that one again. The original language had two more
+ * non-terminals, Statements and Statement, this was for implementing multiple
+ * lines and runtime variables. We do not need any of that for this
+ * implementation.
  */
 
 #ifndef AST_NODE
 #define AST_NODE
 
 // Binary operators, better here as a class as it doesnt pollute names
-enum class Op {
-    Plus,
-    Minus,
-    Multiply,
-    Divide,
-    Error
-};
+enum class Op { Plus, Minus, Multiply, Divide, Error };
 
-enum class NodeType {
-    Base,
-    Int,
-    Id,
-    Unary,
-    Binary
-};
+enum class NodeType { Base, Int, Id, Unary, Binary };
 
 class ASTNode {
   public:
@@ -57,9 +51,7 @@ class IntNode : public ASTNode {
     int value;
     explicit IntNode(int val) : value(val) {}
 
-    int getVal() {
-        return value;
-    }
+    int getVal() { return value; }
 
     NodeType type() { return NodeType::Int; }
 };
@@ -80,6 +72,7 @@ class UnaryMinusNode : public ASTNode {
     explicit UnaryMinusNode(std::unique_ptr<ASTNode> op) : operand(std::move(op)) {}
 
     NodeType type() { return NodeType::Unary; }
+    ASTNode* getRight() { return operand.get(); }
 };
 
 class BinaryOperatorNode : public ASTNode {
@@ -108,6 +101,37 @@ class AbstractSyntaxTree {
     size_t currIdx;
     std::vector<Token> tokens;
 
+    size_t height() {
+        std::queue<ASTNode*> nodes;
+        int height = 0;
+        int nodeCount = 0;
+        ASTNode* treeRoot = root.get();
+        ASTNode* curr;
+        if (root == nullptr) {
+            return 0;
+        }
+
+        nodes.push(treeRoot);
+        while (!nodes.empty()) {
+            height++;
+            nodeCount = nodes.size();
+            while (nodeCount--) {
+                curr = nodes.front();
+
+                if (curr->getLeft() != nullptr) {
+                    nodes.push(curr->getLeft());
+                }
+
+                if (curr->getRight() != nullptr) {
+                    nodes.push(curr->getRight());
+                }
+
+                nodes.pop();
+            }
+        }
+        return height;
+    }
+
     void error() {
         std::cout << "Syntax Error: " << '"' << peek() << '"' << '\n';
         exit(1);
@@ -120,9 +144,7 @@ class AbstractSyntaxTree {
         return tokens[currIdx];
     }
 
-    void consume() {
-        currIdx++;
-    }
+    void consume() { currIdx++; }
 
     std::unique_ptr<ASTNode> expr() {
         if (peek() == tokID::MINUS) {
@@ -130,18 +152,25 @@ class AbstractSyntaxTree {
             std::unique_ptr<ASTNode> op = term();
             std::unique_ptr<ASTNode> node = std::make_unique<UnaryMinusNode>(std::move(op));
             return node;
+
         } else {
+
             std::unique_ptr<ASTNode> leftOp = term();
+
             if (peek() == tokID::MINUS) {
                 consume();
                 std::unique_ptr<ASTNode> rightOp = expr();
-                std::unique_ptr<ASTNode> binNode = std::make_unique<BinaryOperatorNode>(Op::Minus, std::move(leftOp), std::move(rightOp));
+                std::unique_ptr<ASTNode> binNode = std::make_unique<BinaryOperatorNode>(
+                    Op::Minus, std::move(leftOp), std::move(rightOp));
                 return binNode;
+
             } else if (peek() == tokID::PLUS) {
                 consume();
                 std::unique_ptr<ASTNode> rightOp = expr();
-                auto binNode = std::make_unique<BinaryOperatorNode>(Op::Plus, std::move(leftOp), std::move(rightOp));
+                auto binNode = std::make_unique<BinaryOperatorNode>(Op::Plus, std::move(leftOp),
+                                                                    std::move(rightOp));
                 return binNode;
+
             } else {
                 return leftOp;
             }
@@ -161,15 +190,15 @@ class AbstractSyntaxTree {
             if (rightOp->type() == NodeType::Int && rightOp->getVal() == 0) {
                 return rightOp;
             }
-            auto binNode = std::make_unique<BinaryOperatorNode>(
-                Op::Multiply, std::move(leftOp), std::move(rightOp));
+            auto binNode = std::make_unique<BinaryOperatorNode>(Op::Multiply, std::move(leftOp),
+                                                                std::move(rightOp));
             return binNode;
 
         } else if (peek() == tokID::DIV) {
             consume();
             std::unique_ptr<ASTNode> rightOp = term();
-            auto binNode = std::make_unique<BinaryOperatorNode>(
-                Op::Divide, std::move(leftOp), std::move(rightOp));
+            auto binNode = std::make_unique<BinaryOperatorNode>(Op::Divide, std::move(leftOp),
+                                                                std::move(rightOp));
             return binNode;
         } else {
             return leftOp;
@@ -200,10 +229,35 @@ class AbstractSyntaxTree {
         }
     }
 
-  public:
-    void printTree() {
-        printTree(root.get());
+    void inorder(ASTNode* node, std::shared_ptr<std::vector<ASTNode*> > nodes) {
+        if (node == nullptr) return;
+        inorder(node->getLeft(), nodes);
+
+        nodes->push_back(node);
+        inorder(node->getRight(), nodes);
     }
+
+    /*
+     * @brief This is the actual logic behind the heapify function.
+     * Recursively checks all nodes and turns it into a heap array.
+     * @param heap: a shared pointer of vector of ASTNode.
+     */
+    void heapify(std::shared_ptr<std::vector<ASTNode*> > heap, ASTNode* node) {}
+
+  public:
+    /*
+     * @brief Turns a given AST and turns it into a heap arraya.
+     * We use this to store the tree in a meaningful way in a file
+     * @returns std::shared_ptr<std::vector<ASTNode*>>, a shared pointer to a
+     * vector of ASTNodes.
+     */
+    std::shared_ptr<std::vector<ASTNode*> > heapify() {
+        std::shared_ptr<std::vector<ASTNode*> > heap = std::make_shared<std::vector<ASTNode*> >();
+        heapify(heap, root.get());
+        return heap;
+    }
+
+    void printTree() { printTree(root.get()); }
     void printTree(ASTNode* node, std::string prefix = "", bool isLeft = true) {
         if (!node) return;
 
@@ -212,9 +266,15 @@ class AbstractSyntaxTree {
 
         if (node->type() == NodeType::Int) {
             std::cout << node->getVal() << std::endl;
+
         } else if (node->type() == NodeType::Id) {
             std::cout << node->getName() << std::endl;
+
+        } else if (node->type() == NodeType::Unary) {
+            std::cout << "-" << std::endl;
+
         } else if (node->type() == NodeType::Binary) {
+
             switch (node->getOp()) {
             case Op::Plus:
                 std::cout << "+" << std::endl;
@@ -229,23 +289,65 @@ class AbstractSyntaxTree {
                 std::cout << "/" << std::endl;
                 break;
             case Op::Error:
-                std::cout << peek().lexeme;
+                std::cout << peek().lexeme << std::endl;
                 break;
             default:
-                std::cout << peek().lexeme;
+                std::cout << peek().lexeme << std::endl;
             }
-
-            if (node->getRight() || node->getLeft()) {
-                if (node->getLeft()) printTree(node->getLeft(), prefix + (isLeft ? "│   " : "    "), true);
-                if (node->getRight()) printTree(node->getRight(), prefix + (isLeft ? "│   " : "    "), false);
-            }
+        }
+        if (node->getRight() || node->getLeft()) {
+            if (node->getLeft())
+                printTree(node->getLeft(), prefix + (isLeft ? "│   " : "    "), true);
+            if (node->getRight())
+                printTree(node->getRight(), prefix + (isLeft ? "│   " : "    "), false);
         }
     }
 
     std::unique_ptr<ASTNode> root;
     AbstractSyntaxTree(std::vector<Token> _tokens) : currIdx(0), tokens(_tokens) {
+
         size = tokens.size();
         root = expr();
     }
 };
+#endif
+#ifndef OSTREAM
+#define OSTREAM
+std::ostream& operator<<(std::ostream& out, AbstractSyntaxTree tree) {
+    std::shared_ptr<std::vector<ASTNode*> > heap = tree.heapify();
+    out << "{";
+    for (ASTNode* node : *heap.get()) {
+        if (!node) {
+            out << "null";
+
+        } else if (node->type() == NodeType::Binary) {
+            switch (node->getOp()) {
+            case Op::Plus:
+                out << '+';
+                break;
+            case Op::Minus:
+                out << '-';
+                break;
+            case Op::Divide:
+                out << '/';
+                break;
+            case Op::Multiply:
+                out << '*';
+                break;
+            case Op::Error:
+                out << "error";
+                break;
+            }
+        } else if (node->type() == NodeType::Int) {
+            out << node->getVal();
+        } else if (node->type() == NodeType::Id) {
+            out << node->getName();
+        } else if (node->type() == NodeType::Unary) {
+            out << '-';
+        }
+        out << " ";
+    }
+    out << "}";
+    return out;
+}
 #endif
