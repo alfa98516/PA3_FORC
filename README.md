@@ -11,9 +11,11 @@ make
 ```
 
 ### What additional features were implemented above the base version, if any.
-    -
-    -
-    -
+    - Modern C++ Tree
+    - Varibles
+    - AST optimisations
+    - High speed
+    - Error handling
 
 ### An explanation of the format you store the AST (Abstract Syntax Tree) in that the two versions read/write.
 AST is in a txt file that has nodes in a BFS order.
